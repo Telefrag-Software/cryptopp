@@ -12,38 +12,10 @@
 # SET(CMAKE_C_COMPILER ${CMAKE_CXX_COMPILER})
 # # error "The CMAKE_C_COMPILER is set to a C++ compiler"
 
-if(NOT DEFINED cryptopp_DISPLAY_CMAKE_SUPPORT_WARNING)
-  set(cryptopp_DISPLAY_CMAKE_SUPPORT_WARNING 1)
-endif()
-if(cryptopp_DISPLAY_CMAKE_SUPPORT_WARNING)
-  message( STATUS
-"*************************************************************************\n"
-"The Crypto++ library does not officially support CMake. CMake support is a\n"
-"community effort, and the library works with the folks using CMake to help\n"
-"improve it. If you find an issue then please fix it or report it at\n"
-"https://github.com/noloader/cryptopp-cmake.\n"
-"-- *************************************************************************"
-)
-endif()
-
-# Print useful information
-message( STATUS "CMake version ${CMAKE_VERSION}" )
-message( STATUS "System ${CMAKE_SYSTEM_NAME}" )
-message( STATUS "Processor ${CMAKE_SYSTEM_PROCESSOR}" )
-
-cmake_minimum_required(VERSION 2.8.6)
-if (${CMAKE_VERSION} VERSION_LESS "3.0.0")
-  project(cryptopp)
-  set(cryptopp_VERSION_MAJOR 8)
-  set(cryptopp_VERSION_MINOR 9)
-  set(cryptopp_VERSION_PATCH 0)
-else ()
-  cmake_policy(SET CMP0048 NEW)
-  project(cryptopp VERSION 8.9.0.1)
-  if (NOT ${CMAKE_VERSION} VERSION_LESS "3.1.0")
-    cmake_policy(SET CMP0054 NEW)
-  endif ()
-endif ()
+cmake_minimum_required(VERSION 3.5.0...4.2.1)
+cmake_policy(SET CMP0048 NEW)
+project(cryptopp VERSION 8.9.0.3)
+cmake_policy(SET CMP0054 NEW)
 
 # Need to set SRC_DIR manually after removing the Python library code.
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -1170,10 +1142,10 @@ set(export_name "cryptopp-targets")
 
 # Runtime package
 if (BUILD_SHARED)
-  export(TARGETS cryptopp-shared FILE ${export_name}.cmake )
+  export(TARGETS cryptopp-shared FILE ${export_name}-shared.cmake )
   install(
       TARGETS cryptopp-shared
-      EXPORT ${export_name}
+      EXPORT ${export_name}-shared
       DESTINATION ${CMAKE_INSTALL_LIBDIR}
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -1183,8 +1155,8 @@ endif ()
 
 # Development package
 if (BUILD_STATIC)
-  export(TARGETS cryptopp-static FILE ${export_name}.cmake )
-  install(TARGETS cryptopp-static EXPORT ${export_name} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  export(TARGETS cryptopp-static FILE ${export_name}-static.cmake )
+  install(TARGETS cryptopp-static EXPORT ${export_name}-static DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif ()
 install(FILES ${cryptopp_HEADERS} DESTINATION include/cryptopp)
 
@@ -1193,7 +1165,14 @@ if (NOT CMAKE_VERSION VERSION_LESS 2.8.8)
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file("${PROJECT_BINARY_DIR}/cryptopp-config-version.cmake" VERSION ${cryptopp_VERSION_MAJOR}.${cryptopp_VERSION_MINOR}.${cryptopp_VERSION_PATCH} COMPATIBILITY SameMajorVersion)
   install(FILES cryptopp-config.cmake ${PROJECT_BINARY_DIR}/cryptopp-config-version.cmake DESTINATION "lib/cmake/cryptopp")
-  install(EXPORT ${export_name} DESTINATION "lib/cmake/cryptopp")
+
+  if (BUILD_SHARED)
+    install(EXPORT ${export_name}-shared DESTINATION "lib/cmake/cryptopp")
+  endif()
+
+  if (BUILD_STATIC)
+    install(EXPORT ${export_name}-static DESTINATION "lib/cmake/cryptopp")
+  endif()
 endif ()
 
 # Tests
